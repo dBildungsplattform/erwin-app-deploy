@@ -51,7 +51,7 @@ jobs:
       branch: ${{ inputs.erwin_portal_server_branch }}
       chart_name: "erwin-portal-server"
 
-  find_erwin_client_helm_chart_tag:
+  find_erwin_portal_client_helm_chart_tag:
     uses: dBildungsplattform/spsh-app-deploy/.github/workflows/find-helm-chart-by-ticket-or-main-in-registry.yml@7
     with:
       github_repository: "dBildungsplattform/helm-charts-registry"
