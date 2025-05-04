@@ -1,0 +1,170 @@
+name: Delete Kubernetes Namespace
+
+on:
+  workflow_call:
+    inputs:
+      namespace:
+        required: true
+        description: "Namespace has to start with ticketnr, e.g. spsh-1234"
+        type: string
+    secrets:
+      ERW_DEV_KUBECONFIG:
+        required: true
+permissions:
+  contents: read
+
+    
+jobs:
+  recreate_erwin_portal_keycloak_db_name:
+    runs-on: ubuntu-latest
+    outputs:
+      db_name: ${{ steps.create_db_name.outputs.db_name }}
+    steps:
+      - id: create_db_name
+        shell: bash
+        run: |
+          # dbildungs-iam-keycloak db name creation at a single point
+          # Change every "." and "-" into "_", then remove all characters that are not alphanumeric, digit or an underscore and cut it on max length for postgresql db name
+          temp=$(echo "erwin_portal_keycloak_${{ inputs.namespace }}" | tr - _ | tr \. _ | sed 's/[^a-zA-Z0-9_]//g' | cut -c1-63)
+          echo "before" ${{ inputs.namespace }} "after" $temp
+          echo "db_name=$temp" >> $GITHUB_OUTPUT
+
+  recreate_erwin_portal_server_db_name:
+    runs-on: ubuntu-latest
+    outputs:
+      db_name: ${{ steps.create_db_name.outputs.db_name }}
+    steps:
+      - id: create_db_name
+        shell: bash
+        run: |
+          # erwin-portal-server db name creation at a single point
+          # Change every "." and "-" into "_", then remove all characters that are not alphanumeric, digit or an underscore and cut it on max length for postgresql db name
+          temp=$(echo "erwin_portal_server_${{ inputs.namespace }}" | tr - _ | tr \. _ | sed 's/[^a-zA-Z0-9_]//g' | cut -c1-63)
+          echo "before" ${{ inputs.namespace }} "after" $temp
+          echo "db_name=$temp" >> $GITHUB_OUTPUT
+
+  create_ticket_nr_variable:
+    runs-on: ubuntu-latest
+    outputs:
+      ticket_nr: ${{ steps.extract_branch_ticket_nr.outputs.ticket_nr }}
+    steps:
+      - name: Extract project-ticketnumber from branch
+        id: extract_branch_ticket_nr
+        run: |
+          regex='^([[:alpha:]]+?-[[:digit:]]+)'
+          [[ ${{ inputs.namespace }} =~ $regex ]]
+          echo "ticket_nr=$(echo ${BASH_REMATCH[1]} | tr [A-Z] [a-z])" >> $GITHUB_OUTPUT
+
+  delete_databases_and_namespace:
+    needs: 
+      - recreate_erwin_portal_keycloak_db_name
+      - recreate_erwin_portal_server_db_name
+      - create_ticket_nr_variable
+    runs-on: ubuntu-latest
+    steps:
+    - name: checkout repo
+      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  #v4.1.1
+      with:
+        repository: 'dBildungsplattform/spsh-app-deploy'
+
+    - name: Set up kubectl and Helm
+      uses: azure/setup-kubectl@3e0aec4d80787158d308d7b364cb1b702e7feb7f #v4.0.0
+
+    - name: Configure kubeconfig as tmp file
+      run: |
+        echo "${{ secrets.SPSH_DEV_KUBECONFIG }}" > kubeconfig
+        export KUBECONFIG=$(pwd)/kubeconfig
+
+    - name: Delete all Helm-Charts in Namespace to eliminate all database connections
+      run: | 
+        # Get list of installed Helm-Charts in namespace 
+        LIST_OF_HELM_CHARTS_IN_NAMESPACE="$(helm ls \
+        --namespace ${{ inputs.namespace }} \
+        --kubeconfig $(pwd)/kubeconfig \
+        --short)"
+
+        # Check if list of installed Helm-Charts is empty 
+        if [ -z "$LIST_OF_HELM_CHARTS_IN_NAMESPACE" ]; then
+          echo "No Helm-Charts found in namespace ${{ inputs.namespace }}, skipping helm uninstall"
+        else
+          helm uninstall \
+            $LIST_OF_HELM_CHARTS_IN_NAMESPACE \
+            --namespace ${{ inputs.namespace }} \
+            --kubeconfig $(pwd)/kubeconfig \
+            --wait
+        fi
+
+    - name: Delete erwin_portal_keycloak database
+      run: | 
+        # Generate timestamp for job name uniqueness
+        DATE=$(date +%Y%m%d%H%M%S)
+
+        # Define job name for erwin_portal_keycloak database deletion job
+        HELM_KEYCLOAK_DB_DELETION_JOB_NAME="psql-db-${DATE}-keycloak-${{ needs.create_ticket_nr_variable.outputs.ticket_nr }}"
+
+        # Deploy erwin_portal_keycloak database deletion job
+        helm upgrade --install \
+          $HELM_KEYCLOAK_DB_DELETION_JOB_NAME \
+          ./charts/postgres_delete_databases \
+          --namespace ${{ inputs.namespace }} \
+          --set auth.existingSecret="psql-config-secret" \
+          --kubeconfig $(pwd)/kubeconfig \
+          --set database.name=${{ needs.recreate_erwin_portal_keycloak_db_name.outputs.db_name }} \
+          --wait
+
+        # Wait for Job to be completed
+        kubectl wait \
+          --namespace psql-config \
+          --kubeconfig $(pwd)/kubeconfig \
+          --for=condition=complete \
+          --timeout=120s \
+          job $HELM_KEYCLOAK_DB_DELETION_JOB_NAME
+
+    - name: Delete erwin_portal_server database
+      run: | 
+        # Generate timestamp for job name uniqueness
+        DATE=$(date +%Y%m%d%H%M%S)
+
+        # Define job name for erwin_portal_server database deletion job
+        HELM_SERVER_DB_DELETION_JOB_NAME="psql-db-${DATE}-server-${{ needs.create_ticket_nr_variable.outputs.ticket_nr }}"
+
+        # Deploy erwin_portal_server database deletion job
+        helm upgrade --install \
+          $HELM_SERVER_DB_DELETION_JOB_NAME \
+          ./charts/postgres_delete_databases \
+          --namespace ${{ inputs.namespace }} \
+          --set auth.existingSecret="psql-config-secret" \
+          --kubeconfig $(pwd)/kubeconfig \
+          --set database.name=${{ needs.recreate_erwin_portal_server_db_name.outputs.db_name }} \
+          --wait
+
+        # Wait for Job to be completed
+        kubectl wait \
+          --namespace psql-config \
+          --kubeconfig $(pwd)/kubeconfig \
+          --for=condition=complete \
+          --timeout=120s \
+          job $HELM_SERVER_DB_DELETION_JOB_NAME
+
+    - name: Clean up database deletion Helm-Charts and its jobs from cluster
+      run: | 
+        # Get list of installed Helm-Charts in namespace 
+        LIST_OF_HELM_CHARTS_IN_NAMESPACE="$(helm ls \
+        --namespace ${{ inputs.namespace }} \
+        --kubeconfig $(pwd)/kubeconfig \
+        --short)"
+
+        # Check if list of installed Helm-Charts is empty 
+        if [ -z "$LIST_OF_HELM_CHARTS_IN_NAMESPACE" ]; then
+          echo "No Helm-Charts found in namespace ${{ inputs.namespace }}, skipping helm uninstall"
+        else
+          helm uninstall \
+            $LIST_OF_HELM_CHARTS_IN_NAMESPACE \
+            --namespace ${{ inputs.namespace }} \
+            --kubeconfig $(pwd)/kubeconfig \
+            --wait
+        fi
+
+    - name: Delete Kubernetes namespace
+      run: |
+        kubectl delete namespace ${{ inputs.namespace }} --kubeconfig $(pwd)/kubeconfig

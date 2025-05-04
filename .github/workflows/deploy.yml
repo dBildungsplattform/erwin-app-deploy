@@ -1,0 +1,246 @@
+---
+name: Deploy Action
+
+on:
+  workflow_call:
+    inputs:
+      namespace:
+        required: true
+        type: string
+      user_name:
+        required: false
+        default: spsh-bot
+        type: string
+      erwin_portal_server_branch:
+        required: true
+        description: "Has to be main or in format <project>-<ticketnumber>, e.g. spsh-130"
+        default: main
+        type: string
+      erwin_portal_client_branch:
+        required: true
+        description: "Has to be main or in format <project>-<ticketnumber>, e.g. spsh-130"
+        default: main
+        type: string
+      erwin_portal_keycloak_branch:
+        required: true
+        description: "Has to be main or in format <project>-<ticketnumber>, e.g. spsh-130"
+        default: main
+        type: string
+      dbseeding:
+        required: false
+        description: "Enable Seeding (true, false, chart_value)"
+        default: chart_value
+        type: string
+      database_recreation:
+        required: false
+        description: "Decide whether databases should be recreated or not"
+        default: false
+        type: string
+    secrets:
+      ERW_DEV_KUBECONFIG:
+        required: true
+    
+permissions:
+  contents: read
+
+jobs:
+  find_erwin_portal_server_helm_chart_tag:
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/find-helm-chart-by-ticket-or-main-in-registry.yml@7
+    with:
+      github_repository: "dBildungsplattform/helm-charts-registry"
+      branch: ${{ inputs.erwin_portal_server_branch }}
+      chart_name: "erwin-portal-server"
+
+  find_erwin_client_helm_chart_tag:
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/find-helm-chart-by-ticket-or-main-in-registry.yml@7
+    with:
+      github_repository: "dBildungsplattform/helm-charts-registry"
+      branch: ${{ inputs.erwin_portal_client_branch }}
+      chart_name: "erwin-portal-client"
+
+  find_erwin_portal_keycloak_helm_chart_tag:
+    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/find-helm-chart-by-ticket-or-main-in-registry.yml@7
+    with:
+      github_repository: "dBildungsplattform/helm-charts-registry"
+      branch: ${{ inputs.erwin_portal_keycloak_branch }}
+      chart_name: "erwin-portal-keycloak"
+   
+  recreate_erwin_portal_keycloak_db_name:
+    runs-on: ubuntu-latest
+    outputs:
+      db_name: ${{ steps.create_db_name.outputs.db_name }}
+    steps:
+      - id: create_db_name
+        shell: bash
+        run: |
+          # erwin-portal-keycloak db name creation at a single point
+          # Change every "." and "-" into "_", then remove all characters that are not alphanumeric, digit or an underscore and cut it on max lenght for postgresql db name
+          temp=$(echo "erwin_portal_keycloak_${{ inputs.namespace }}" | tr - _ | tr \. _ | sed 's/[^a-zA-Z0-9_]//g' | cut -c1-63)
+          echo "before" ${{ inputs.namespace }} "after" $temp
+          echo "db_name=$temp" >> $GITHUB_OUTPUT
+
+  recreate_erwin_portal_server_db_name:
+    runs-on: ubuntu-latest
+    outputs:
+     db_name: ${{ steps.create_db_name.outputs.db_name }}
+    steps:
+      - id: create_db_name
+        shell: bash
+        run: |
+          # erwin_portal_server db name creation at a single point
+          # Change every "." and "-" into "_", then remove all characters that are not alphanumeric, digit or an underscore and cut it on max lenght for postgresql db name
+          temp=$(echo "erwin_portal_server_${{ inputs.namespace }}" | tr - _ | tr \. _ | sed 's/[^a-zA-Z0-9_]//g' | cut -c1-63)
+          echo "before" ${{ inputs.namespace }} "after" $temp
+          echo "db_name=$temp" >> $GITHUB_OUTPUT
+
+  deployment:
+    needs: 
+      - find_erwin_portal_server_helm_chart_tag
+      - find_erwin_portal_client_helm_chart_tag
+      - find_erwin_portal_keycloak_helm_chart_tag
+      - recreate_erwin_portal_keycloak_db_name
+      - recreate_erwin_portal_server_db_name
+    runs-on: 'ubuntu-latest'
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+      KUBECONFIG_FILE: '${{ secrets.ERW_DEV_KUBECONFIG }}'
+    steps:
+      - name: Check if namespace is allowed, fails if it not starts with ticketnr, e.g. spsh-1234 or is exactly 'main'
+        run: | 
+            if ${{ inputs.namespace != 'main' }}; then
+              regex='^([[:alpha:]]+?-[[:digit:]]+)'
+              [[ ${{ inputs.namespace }} =~ $regex ]]
+              echo "${BASH_REMATCH[1]}"
+            fi
+      - name: checkout repo
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
+        with:
+          repository: 'dBildungsplattform/erwin-app-deploy'
+          # comment this in to test changes of a branch in repo
+          # ref: "<branch_name>"
+
+      - name: Set up kubectl and Helm
+        uses: azure/setup-kubectl@3e0aec4d80787158d308d7b364cb1b702e7feb7f #v4.0.0
+
+      - name: Set kubeconfig
+        run: |
+          mkdir /home/runner/.kube/
+          echo "${{ secrets.ERW_DEV_KUBECONFIG }}" > /home/runner/.kube/config
+          chmod 600 /home/runner/.kube/config
+
+      - name: Create Kubernetes namespace
+        run: |
+          kubectl create namespace ${{ inputs.namespace }} || true
+
+      - name: Download erwin_portal_server Helm chart
+        run: |
+          wget https://github.com/dBildungsplattform/helm-charts-registry/releases/download/${{ needs.find_erwin_portal_server_helm_chart_tag.outputs.helm_chart_tagname }}/${{ needs.find_erwin_portal_server_helm_chart_tag.outputs.helm_chart_tagname }}.tgz
+          tar -zxvf ${{ needs.find_erwin_portal_server_helm_chart_tag.outputs.helm_chart_tagname }}.tgz 
+
+      - name: Download erwin_portal_client Helm chart
+        run: |
+          wget https://github.com/dBildungsplattform/helm-charts-registry/releases/download/${{ needs.find_erwin_portal_client_helm_chart_tag.outputs.helm_chart_tagname }}/${{ needs.find_erwin_portal_client_helm_chart_tag.outputs.helm_chart_tagname }}.tgz
+          tar -zxvf ${{ needs.find_erwin_portal_client_helm_chart_tag.outputs.helm_chart_tagname }}.tgz 
+
+      - name: Download erwin_portal_keycloak Helm chart
+        run: |
+          wget https://github.com/dBildungsplattform/helm-charts-registry/releases/download/${{ needs.find_erwin_portal_keycloak_helm_chart_tag.outputs.helm_chart_tagname }}/${{ needs.find_erwin_portal_keycloak_helm_chart_tag.outputs.helm_chart_tagname }}.tgz
+          tar -zxvf ${{ needs.find_erwin_portal_keycloak_helm_chart_tag.outputs.helm_chart_tagname }}.tgz 
+
+      # On branches the ticket number is used as image tag. To ensure the pods are restarted
+      # and pull the the latest image, we uninstall the helm release first. (Otherwise same tag -> no change)
+      # We also need to uninstall all pods to savely recreate the database
+      - name: Uninstall all Helm-Charts in the namespace
+        run: |     
+          # Get list of installed Helm-Charts in namespace 
+          LIST_OF_HELM_CHARTS_IN_NAMESPACE="$(helm ls \
+          --namespace ${{ inputs.namespace }} \
+          --short \
+          --all)"
+
+          # Check if list of installed Helm-Charts is empty 
+          if [ -z "$LIST_OF_HELM_CHARTS_IN_NAMESPACE" ]; then
+            echo "No Helm-Charts found in namespace ${{ inputs.namespace }}, skipping uninstall"
+          else
+            helm uninstall \
+              $LIST_OF_HELM_CHARTS_IN_NAMESPACE \
+              --namespace ${{ inputs.namespace }} \
+              --wait
+          fi
+      # - name: Create all secrets
+      #   run: |
+      #     kubectl --namespace=${{ inputs.namespace }} apply -f ./dbildungs-iam-server-secret-dev.yaml  # name shoule be change
+      #     kubectl --namespace=${{ inputs.namespace }} apply -f ./dbildungs-iam-keycloak-secret-dev.yaml # name shoule be change
+
+      # - name: "Recreate Database for erwin-portal-keycloak - Recreate: ${{ inputs.database_recreation }}"
+      #   run: |
+      #     # Generate timestamp for job name uniqueness
+      #     DATE=$(date +%Y%m%d%H%M%S)
+
+      #     # Define job name for Keycloak database creation job
+      #     HELM_KEYCLOAK_DB_JOB_NAME="psql-db-${DATE}-keycloak-${{ inputs.namespace }}"
+
+      #     # Recreate Database for erwin-portal-keycloak
+      #     helm upgrade --install \
+      #       $HELM_KEYCLOAK_DB_JOB_NAME \
+      #       ./charts/postgres_recreate_databases \
+      #       --namespace ${{ inputs.namespace }} \
+      #       --set auth.existingSecret="psql-config-secret" \
+      #       --set database.name=${{ needs.recreate_erwin_portal_keycloak_db_name.outputs.db_name }} \
+      #       --set database.recreation=${{ inputs.database_recreation }}
+
+      # - name: "Recreate Database for erwin_portal-server - Recreate: ${{ inputs.database_recreation }}"
+      #   run: |
+      #     # Generate timestamp for job name uniqueness
+      #     DATE=$(date +%Y%m%d%H%M%S)
+
+      #     # Define job name for ERW-App database creation job
+      #     HELM_SERVER_DB_JOB_NAME="psql-db-${DATE}-database-${{ inputs.namespace }}"
+
+      #     # Recreate Database for ERW-App 
+      #     helm upgrade --install \
+      #       $HELM_SERVER_DB_JOB_NAME \
+      #       ./charts/postgres_recreate_databases \
+      #       --namespace ${{ inputs.namespace }} \
+      #       --set auth.existingSecret="psql-config-secret" \
+      #       --set database.name=${{ needs.recreate_erwin_portal_server_db_name.outputs.db_name }} \
+      #       --set database.recreation=${{ inputs.database_recreation }}
+
+      # # Wait is needed, dbildungs_iam_server expects keycloak to be up!
+      # - name: Deploy erwin_portal_keycloak Helm chart
+      #   run: |
+      #     helm upgrade --install \
+      #       erwin-portal-keycloak \
+      #       erwin-portal-keycloak \
+      #       --namespace ${{ inputs.namespace }} \
+      #       --set auth.existingSecret="erwin-portal-keycloak" \
+      #       --set keycloakHostname=${{ inputs.namespace }}-keycloak.dev.spsh.dbildungsplattform.de \
+      #       --set frontendHostname=${{ inputs.namespace }}.dev.spsh.dbildungsplattform.de \
+      #       --set database.name=${{ needs.recreate_dbildungs_iam_keycloak_db_name.outputs.db_name }} \
+      #       --set database.username=spshdeveloper \
+      #       --wait \
+      #       --timeout 210s
+      
+      # - name: Deploy schulportal_client Helm chart
+      #   run: |
+      #     helm upgrade --install \
+      #       schulportal-client \
+      #       schulportal-client \
+      #       --namespace ${{ inputs.namespace }} \
+      #       --set frontendHostname=${{ inputs.namespace }}.dev.spsh.dbildungsplattform.de \
+      #       --wait \
+      #       --timeout 60s
+
+      # - name: Deploy dbildungs_iam_server Helm chart
+      #   run: |
+      #     helm upgrade --install \
+      #       dbildungs-iam-server \
+      #       dbildungs-iam-server \
+      #       --namespace ${{ inputs.namespace }} \
+      #       --set auth.existingSecret="dbildungs-iam-server" \
+      #       --set backendHostname=${{ inputs.namespace }}.dev.spsh.dbildungsplattform.de \
+      #       --set database.name=${{ needs.recreate_dbildungs_iam_server_db_name.outputs.db_name }} \
+      #       --set keycloakHostname=dbildungs-iam-keycloak \
+      #       ${{ inputs.dbseeding != 'chart_value' && format('--set backend.dbseeding.enabled={0}', inputs.dbseeding) || '' }} \
+      #       --wait \
+      #       --timeout 360s
