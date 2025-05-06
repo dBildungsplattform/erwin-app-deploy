@@ -169,8 +169,8 @@ jobs:
           fi
       - name: Create all secrets
         run: |
-          kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-server-secret-dev.yaml 
-          kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-keycloak-secret-dev.yaml
+          kubectl --namespace=${{ inputs.namespace }} apply -f erwin-portal-server-secret-dev.yaml 
+          kubectl --namespace=${{ inputs.namespace }} apply -f erwin-portal-keycloak-secret-dev.yaml
 
       - name: "Recreate Database for erwin-portal-keycloak - Recreate: ${{ inputs.database_recreation }}"
         run: |
