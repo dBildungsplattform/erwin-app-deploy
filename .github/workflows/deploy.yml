@@ -216,31 +216,31 @@ jobs:
             --set auth.existingSecret="erwin-portal-keycloak" \
             #--set keycloakHostname=${{ inputs.namespace }}-keycloak.dev.spsh.dbildungsplattform.de \
             #--set frontendHostname=${{ inputs.namespace }}.dev.spsh.dbildungsplattform.de \
-            --set database.name=${{ needs.recreate_dbildungs_iam_keycloak_db_name.outputs.db_name }} \
+            --set database.name=${{ needs.recreate_erwin_portal_keycloak_db_name.outputs.db_name }} \
             --set database.username=spshdeveloper \
             --wait \
             --timeout 210s
       
-      - name: Deploy schulportal_client Helm chart
+      - name: Deploy erwin_portal_client Helm chart
         run: |
           helm upgrade --install \
-            schulportal-client \
-            schulportal-client \
+            erwin-portal-client \
+            erwin-portal-client \
             --namespace ${{ inputs.namespace }} \
             #--set frontendHostname=${{ inputs.namespace }}.dev.spsh.dbildungsplattform.de \
             --wait \
             --timeout 60s
 
-      - name: Deploy dbildungs_iam_server Helm chart
+      - name: Deploy erwin_portal_server Helm chart
         run: |
           helm upgrade --install \
-            dbildungs-iam-server \
-            dbildungs-iam-server \
+            erwin-portal-server \
+            erwin-portal-server \
             --namespace ${{ inputs.namespace }} \
-            --set auth.existingSecret="dbildungs-iam-server" \
+            --set auth.existingSecret="erwin-portal-server" \
             #--set backendHostname=${{ inputs.namespace }}.dev.spsh.dbildungsplattform.de \
-            --set database.name=${{ needs.recreate_dbildungs_iam_server_db_name.outputs.db_name }} \
+            --set database.name=${{ needs.recreate_erwin_portal_server_db_name.outputs.db_name }} \
             #--set keycloakHostname=dbildungs-iam-keycloak \
-            ${{ inputs.dbseeding != 'chart_value' && format('--set backend.dbseeding.enabled={0}', inputs.dbseeding) || '' }} \
+            #${{ inputs.dbseeding != 'chart_value' && format('--set backend.dbseeding.enabled={0}', inputs.dbseeding) || '' }} \
             --wait \
             --timeout 360s
