@@ -118,7 +118,7 @@ jobs:
           repository: 'dBildungsplattform/erwin-app-deploy'
           # comment this in to test changes of a branch in repo
           # ref: "<branch_name>"
-          ref: 'dbp-1438'
+          ref: 'DBP-1438'
           fetch-depth: 0
 
       - name: Set up kubectl and Helm
