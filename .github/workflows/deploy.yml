@@ -122,11 +122,7 @@ jobs:
           repository: 'dBildungsplattform/erwin-app-deploy'
           # comment this in to test changes of a branch in repo
           # ref: "<branch_name>"
-          #ref: ${{ github.ref_name }}
-          #ref: "DBP-1438-Create-basic-Erwin-DevPipeline"
-          ref: 0.0.0
-          fetch-depth: 0
-
+          
       - name: Set up kubectl and Helm
         uses: azure/setup-kubectl@3e0aec4d80787158d308d7b364cb1b702e7feb7f #v4.0.0
 
@@ -222,8 +218,6 @@ jobs:
             erwin-portal-keycloak \
             --namespace ${{ inputs.namespace }} \
             --set auth.existingSecret="erwin-portal-keycloak" \
-            #--set keycloakHostname=${{ inputs.namespace }}-keycloak.dev.spsh.dbildungsplattform.de \
-            #--set frontendHostname=${{ inputs.namespace }}.dev.spsh.dbildungsplattform.de \
             --set database.name=${{ needs.recreate_erwin_portal_keycloak_db_name.outputs.db_name }} \
             --set database.username=spshdeveloper \
             --wait \
@@ -235,7 +229,6 @@ jobs:
             erwin-portal-client \
             erwin-portal-client \
             --namespace ${{ inputs.namespace }} \
-            #--set frontendHostname=${{ inputs.namespace }}.dev.spsh.dbildungsplattform.de \
             --wait \
             --timeout 60s
 
@@ -246,9 +239,6 @@ jobs:
             erwin-portal-server \
             --namespace ${{ inputs.namespace }} \
             --set auth.existingSecret="erwin-portal-server" \
-            #--set backendHostname=${{ inputs.namespace }}.dev.spsh.dbildungsplattform.de \
             --set database.name=${{ needs.recreate_erwin_portal_server_db_name.outputs.db_name }} \
-            #--set keycloakHostname=dbildungs-iam-keycloak \
-            #${{ inputs.dbseeding != 'chart_value' && format('--set backend.dbseeding.enabled={0}', inputs.dbseeding) || '' }} \
             --wait \
             --timeout 360s
