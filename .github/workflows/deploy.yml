@@ -112,6 +112,10 @@ jobs:
               [[ ${{ inputs.namespace }} =~ $regex ]]
               echo "${BASH_REMATCH[1]}"
             fi
+      
+      - name: check erwin_portal_keycloak_branch
+        run: ${{ inputs.erwin_portal_keycloak_branch }}"
+
       - name: checkout repo
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 #v4.1.1
         with:
@@ -119,7 +123,8 @@ jobs:
           # comment this in to test changes of a branch in repo
           # ref: "<branch_name>"
           #ref: ${{ github.ref_name }}
-          ref: "DBP-1438-Create-basic-Erwin-DevPipeline"
+          #ref: "DBP-1438-Create-basic-Erwin-DevPipeline"
+          ref: 0.0.0
           fetch-depth: 0
 
       - name: Set up kubectl and Helm
