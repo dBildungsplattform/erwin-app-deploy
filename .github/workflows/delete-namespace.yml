@@ -5,7 +5,7 @@ on:
     inputs:
       namespace:
         required: true
-        description: "Namespace has to start with ticketnr, e.g. spsh-1234"
+        description: "Namespace has to start with ticketnr, e.g. erw-1234"
         type: string
     secrets:
       ERW_DEV_KUBECONFIG:
@@ -65,14 +65,14 @@ jobs:
     - name: checkout repo
       uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11  #v4.1.1
       with:
-        repository: 'dBildungsplattform/spsh-app-deploy'
+        repository: 'dBildungsplattform/erwin-app-deploy'
 
     - name: Set up kubectl and Helm
       uses: azure/setup-kubectl@3e0aec4d80787158d308d7b364cb1b702e7feb7f #v4.0.0
 
     - name: Configure kubeconfig as tmp file
       run: |
-        echo "${{ secrets.SPSH_DEV_KUBECONFIG }}" > kubeconfig
+        echo "${{ secrets.ERW_DEV_KUBECONFIG }}" > kubeconfig
         export KUBECONFIG=$(pwd)/kubeconfig
 
     - name: Delete all Helm-Charts in Namespace to eliminate all database connections

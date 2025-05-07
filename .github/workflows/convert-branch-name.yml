@@ -46,7 +46,7 @@ jobs:
           elif [[ "${{ inputs.branch }}" == 'main' ]]; then
             tag=""
           else
-          echo "::error::Couldn't extract ticket from branch" ${{ inputs.branch }} ". If not main the branch name should begin alpha-digit or alpha-digit-digit blocks (e.g. SPSH-1234-test-name or release-1-1-optional-text)"
+          echo "::error::Couldn't extract ticket from branch" ${{ inputs.branch }} ". If not main the branch name should begin alpha-digit or alpha-digit-digit blocks (e.g. ERW-1234-test-name or release-1-1-optional-text)"
             exit 1
           fi
           echo "image_tag=${tag}" >> "$GITHUB_OUTPUT"

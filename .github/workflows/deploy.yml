@@ -9,21 +9,21 @@ on:
         type: string
       user_name:
         required: false
-        default: spsh-bot
+        default: erw-bot
         type: string
       erwin_portal_server_branch:
         required: true
-        description: "Has to be main or in format <project>-<ticketnumber>, e.g. spsh-130"
+        description: "Has to be main or in format <project>-<ticketnumber>, e.g. erw-130"
         default: main
         type: string
       erwin_portal_client_branch:
         required: true
-        description: "Has to be main or in format <project>-<ticketnumber>, e.g. spsh-130"
+        description: "Has to be main or in format <project>-<ticketnumber>, e.g. erw-130"
         default: main
         type: string
       erwin_portal_keycloak_branch:
         required: true
-        description: "Has to be main or in format <project>-<ticketnumber>, e.g. spsh-130"
+        description: "Has to be main or in format <project>-<ticketnumber>, e.g. erw-130"
         default: main
         type: string
       dbseeding:
@@ -45,21 +45,21 @@ permissions:
 
 jobs:
   find_erwin_portal_server_helm_chart_tag:
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/find-helm-chart-by-ticket-or-main-in-registry.yml@7
+    uses: dBildungsplattform/erwin-app-deploy/.github/workflows/find-helm-chart-by-ticket-or-main-in-registry.yml@7
     with:
       github_repository: "dBildungsplattform/helm-charts-registry"
       branch: ${{ inputs.erwin_portal_server_branch }}
       chart_name: "erwin-portal-server"
 
   find_erwin_portal_client_helm_chart_tag:
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/find-helm-chart-by-ticket-or-main-in-registry.yml@7
+    uses: dBildungsplattform/erwin-app-deploy/.github/workflows/find-helm-chart-by-ticket-or-main-in-registry.yml@7
     with:
       github_repository: "dBildungsplattform/helm-charts-registry"
       branch: ${{ inputs.erwin_portal_client_branch }}
       chart_name: "erwin-portal-client"
 
   find_erwin_portal_keycloak_helm_chart_tag:
-    uses: dBildungsplattform/spsh-app-deploy/.github/workflows/find-helm-chart-by-ticket-or-main-in-registry.yml@7
+    uses: dBildungsplattform/erwin-app-deploy/.github/workflows/find-helm-chart-by-ticket-or-main-in-registry.yml@7
     with:
       github_repository: "dBildungsplattform/helm-charts-registry"
       branch: ${{ inputs.erwin_portal_keycloak_branch }}
@@ -105,7 +105,7 @@ jobs:
       GITHUB_TOKEN: ${{ github.token }}
       KUBECONFIG_FILE: '${{ secrets.ERW_DEV_KUBECONFIG }}'
     steps:
-      - name: Check if namespace is allowed, fails if it not starts with ticketnr, e.g. spsh-1234 or is exactly 'main'
+      - name: Check if namespace is allowed, fails if it not starts with ticketnr, e.g. erw-1234 or is exactly 'main'
         run: | 
             if ${{ inputs.namespace != 'main' }}; then
               regex='^([[:alpha:]]+?-[[:digit:]]+)'
@@ -219,7 +219,7 @@ jobs:
             --namespace ${{ inputs.namespace }} \
             --set auth.existingSecret="erwin-portal-keycloak" \
             --set database.name=${{ needs.recreate_erwin_portal_keycloak_db_name.outputs.db_name }} \
-            --set database.username=spshdeveloper \
+            --set database.username=erwdeveloper \
             --wait \
             --timeout 210s
       
