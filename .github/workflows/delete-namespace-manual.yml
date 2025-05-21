@@ -21,7 +21,7 @@ jobs:
   delete_databases_and_namespace:
     needs: 
       - check_namespace_input
-    uses: dBildungsplattform/erwin-app-deploy/.github/workflows/delete-namespace.yml@DBP-1438-deploy
+    uses: dBildungsplattform/erwin-app-deploy/.github/workflows/delete-namespace.yml@1
     with:
       namespace: ${{ github.event.inputs.namespace }}
     secrets:
