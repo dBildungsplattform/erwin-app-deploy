@@ -25,7 +25,7 @@ jobs:
     with:
       namespace: ${{ github.event.inputs.namespace }}
     secrets:
-      ERW_DEV_KUBECONFIG: ${{ secrets.ERW_DEV_KUBECONFIG }}
+      ERWIN_DEV_KUBECONFIG: ${{ secrets.ERWIN_DEV_KUBECONFIG }}
 
   deletion_successful:
     needs:

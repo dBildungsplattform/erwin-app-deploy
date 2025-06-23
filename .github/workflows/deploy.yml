@@ -42,7 +42,7 @@ on:
         default: false
         type: string
     secrets:
-      ERW_DEV_KUBECONFIG:
+      ERWIN_DEV_KUBECONFIG:
         required: true
     
 permissions:
@@ -116,7 +116,7 @@ jobs:
     runs-on: 'ubuntu-latest'
     env:
       GITHUB_TOKEN: ${{ github.token }}
-      KUBECONFIG_FILE: '${{ secrets.ERW_DEV_KUBECONFIG }}'
+      KUBECONFIG_FILE: '${{ secrets.ERWIN_DEV_KUBECONFIG }}'
     steps:
       - name: Check if namespace is allowed, fails if it not starts with ticketnr, e.g. erw-1234 or is exactly 'main'
         run: | 
@@ -139,7 +139,7 @@ jobs:
       - name: Set kubeconfig
         run: |
           mkdir /home/runner/.kube/
-          echo "${{ secrets.ERW_DEV_KUBECONFIG }}" > /home/runner/.kube/config
+          echo "${{ secrets.ERWIN_DEV_KUBECONFIG }}" > /home/runner/.kube/config
           chmod 600 /home/runner/.kube/config
 
       - name: Create Kubernetes namespace
