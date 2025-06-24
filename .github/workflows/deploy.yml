@@ -9,7 +9,7 @@ on:
         type: string
       user_name:
         required: false
-        default: erw-bot
+        default: erwin-bot
         type: string
       erwin_portal_server_branch:
         required: true
@@ -215,10 +215,10 @@ jobs:
           # Generate timestamp for job name uniqueness
           DATE=$(date +%Y%m%d%H%M%S)
 
-          # Define job name for ERW-App database creation job
+          # Define job name for ERWIN-App database creation job
           HELM_SERVER_DB_JOB_NAME="psql-db-${DATE}-database-${{ inputs.namespace }}"
 
-          # Recreate Database for ERW-App 
+          # Recreate Database for ERWIN-App 
           helm upgrade --install \
             $HELM_SERVER_DB_JOB_NAME \
             ./charts/postgres_recreate_databases \
@@ -238,10 +238,10 @@ jobs:
             --set keycloakHostname=${{ inputs.namespace }}-keycloak.dev.spsh.dbildungsplattform.de \
             --set frontendHostname=${{ inputs.namespace }}.dev.spsh.dbildungsplattform.de \
             --set database.name=${{ needs.recreate_erwin_portal_keycloak_db_name.outputs.db_name }} \
-            --set database.username=erwdeveloper \
+            --set database.username=erwindeveloper \
             --wait \
-            --timeout 210s
-      # Deploy erwin_portal_ldap wird in folloup ticket bearbeitet
+            --timeout 300s
+      
       # even though the initTLSSecret.secret value is set it has no effect if the initTLSSecret in not enabled (default: false) - only necessary for External IP
       - name: Deploy erwin_portal_ldap Helm chart
         run: |
@@ -277,3 +277,33 @@ jobs:
             ${{ inputs.dbseeding != 'chart_value' && format('--set backend.dbseeding.enabled={0}', inputs.dbseeding) || '' }} \
             --wait \
             --timeout 360s
+  
+  # determine_playwright_branch:
+  #   if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/')}}
+  #   runs-on: ubuntu-latest
+  #   outputs:
+  #     playwright_branch: ${{ steps.check_branch.outputs.playwright_branch }}
+  #   steps:
+  #     - name: Check current branch
+  #       run: |
+  #         echo "Current branch: ${{ github.ref_name }}"
+  #     - name: Check if Playwright branch exists
+  #       id: check_branch
+  #       run: |
+  #         playwright_branch="${{ github.ref_name }}"
+  #         if git ls-remote --heads --exit-code https://github.com/dBildungsplattform/schulportal-testautomatisierung $playwright_branch &> /dev/null; then
+  #           echo "playwright_branch=$playwright_branch" >> $GITHUB_OUTPUT
+  #         else
+  #           echo "playwright_branch=main" >> $GITHUB_OUTPUT
+  #         fi
+  #         echo "Branch exists: $?"
+
+  # run_playwright_tests:
+  #   needs:
+  #     - deployment
+  #     - determine_playwright_branch
+  #   uses: dBildungsplattform/schulportal-testautomatisierung/.github/workflows/playwright.yml@main
+  #   secrets: inherit
+  #   with:
+  #     frontendHostname: "${{ inputs.namespace }}.dev.spsh.dbildungsplattform.de"
+  #     playwright_branch: ${{ needs.determine_playwright_branch.outputs.playwright_branch || 'main' }}
