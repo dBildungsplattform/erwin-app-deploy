@@ -210,7 +210,7 @@ jobs:
             --set database.name=${{ needs.recreate_erwin_portal_keycloak_db_name.outputs.db_name }} \
             --set database.recreation=${{ inputs.database_recreation }}
 
-      - name: "Recreate Database for erwin_portal-server - Recreate: ${{ inputs.database_recreation }}"
+      - name: "Recreate Database for erwin-portal-server - Recreate: ${{ inputs.database_recreation }}"
         run: |
           # Generate timestamp for job name uniqueness
           DATE=$(date +%Y%m%d%H%M%S)
