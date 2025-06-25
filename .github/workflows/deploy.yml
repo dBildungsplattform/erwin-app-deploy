@@ -242,17 +242,17 @@ jobs:
             --wait \
             --timeout 300s
       
-      # even though the initTLSSecret.secret value is set it has no effect if the initTLSSecret in not enabled (default: false) - only necessary for External IP
-      - name: Deploy erwin_portal_ldap Helm chart
-        run: |
-          helm upgrade --install \
-            erwin-portal-ldap \
-            erwin-portal-ldap \
-            --namespace ${{ inputs.namespace }} \
-            --set global.existingSecret="erwin-portal-ldap" \
-            --set initTLSSecret.secret="erwin-portal-ldap-tls" \
-            --wait \
-            --timeout 90s
+      # # even though the initTLSSecret.secret value is set it has no effect if the initTLSSecret in not enabled (default: false) - only necessary for External IP
+      # - name: Deploy erwin_portal_ldap Helm chart
+      #   run: |
+      #     helm upgrade --install \
+      #       erwin-portal-ldap \
+      #       erwin-portal-ldap \
+      #       --namespace ${{ inputs.namespace }} \
+      #       --set global.existingSecret="erwin-portal-ldap" \
+      #       --set initTLSSecret.secret="erwin-portal-ldap-tls" \
+      #       --wait \
+      #       --timeout 90s
       
       - name: Deploy erwin_portal_client Helm chart
         run: |
