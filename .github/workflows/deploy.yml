@@ -235,8 +235,8 @@ jobs:
             erwin-portal-keycloak \
             --namespace ${{ inputs.namespace }} \
             --set auth.existingSecret="erwin-portal-keycloak" \
-            --set keycloakHostname=${{ inputs.namespace }}-keycloak.dev.spsh.dbildungsplattform.de \
-            --set frontendHostname=${{ inputs.namespace }}.dev.spsh.dbildungsplattform.de \
+            --set keycloakHostname=${{ inputs.namespace }}-keycloak.dev.erwin.dbildungscloud.de \
+            --set frontendHostname=${{ inputs.namespace }}.dev.erwin.dbildungscloud.de \
             --set database.name=${{ needs.recreate_erwin_portal_keycloak_db_name.outputs.db_name }} \
             --set database.username=erwindeveloper \
             --wait \
@@ -260,7 +260,7 @@ jobs:
             erwin-portal-client \
             erwin-portal-client \
             --namespace ${{ inputs.namespace }} \
-            --set frontendHostname=${{ inputs.namespace }}.dev.spsh.dbildungsplattform.de \
+            --set frontendHostname=${{ inputs.namespace }}.dev.erwin.dbildungscloud.de \
             --wait \
             --timeout 60s
 
@@ -271,39 +271,9 @@ jobs:
             erwin-portal-server \
             --namespace ${{ inputs.namespace }} \
             --set auth.existingSecret="erwin-portal-server" \
-            --set backendHostname=${{ inputs.namespace }}.dev.spsh.dbildungsplattform.de \
+            --set backendHostname=${{ inputs.namespace }}.dev.erwin.dbildungscloud.de \
             --set database.name=${{ needs.recreate_erwin_portal_server_db_name.outputs.db_name }} \
             --set keycloakHostname=erwin-portal-keycloak \
             ${{ inputs.dbseeding != 'chart_value' && format('--set backend.dbseeding.enabled={0}', inputs.dbseeding) || '' }} \
             --wait \
             --timeout 360s
-  
-  # determine_playwright_branch:
-  #   if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/')}}
-  #   runs-on: ubuntu-latest
-  #   outputs:
-  #     playwright_branch: ${{ steps.check_branch.outputs.playwright_branch }}
-  #   steps:
-  #     - name: Check current branch
-  #       run: |
-  #         echo "Current branch: ${{ github.ref_name }}"
-  #     - name: Check if Playwright branch exists
-  #       id: check_branch
-  #       run: |
-  #         playwright_branch="${{ github.ref_name }}"
-  #         if git ls-remote --heads --exit-code https://github.com/dBildungsplattform/schulportal-testautomatisierung $playwright_branch &> /dev/null; then
-  #           echo "playwright_branch=$playwright_branch" >> $GITHUB_OUTPUT
-  #         else
-  #           echo "playwright_branch=main" >> $GITHUB_OUTPUT
-  #         fi
-  #         echo "Branch exists: $?"
-
-  # run_playwright_tests:
-  #   needs:
-  #     - deployment
-  #     - determine_playwright_branch
-  #   uses: dBildungsplattform/schulportal-testautomatisierung/.github/workflows/playwright.yml@main
-  #   secrets: inherit
-  #   with:
-  #     frontendHostname: "${{ inputs.namespace }}.dev.spsh.dbildungsplattform.de"
-  #     playwright_branch: ${{ needs.determine_playwright_branch.outputs.playwright_branch || 'main' }}
