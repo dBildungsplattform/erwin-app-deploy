@@ -160,10 +160,10 @@ jobs:
           wget https://github.com/dBildungsplattform/helm-charts-registry/releases/download/${{ needs.find_erwin_portal_keycloak_helm_chart_tag.outputs.helm_chart_tagname }}/${{ needs.find_erwin_portal_keycloak_helm_chart_tag.outputs.helm_chart_tagname }}.tgz
           tar -zxvf ${{ needs.find_erwin_portal_keycloak_helm_chart_tag.outputs.helm_chart_tagname }}.tgz 
 
-      - name: Download erwin_portal_ldap Helm chart
-        run: |
-          wget https://github.com/dBildungsplattform/helm-charts-registry/releases/download/${{ needs.find_erwin_portal_ldap_helm_chart_tag.outputs.helm_chart_tagname }}/${{ needs.find_erwin_portal_ldap_helm_chart_tag.outputs.helm_chart_tagname }}.tgz
-          tar -zxvf ${{ needs.find_erwin_portal_ldap_helm_chart_tag.outputs.helm_chart_tagname }}.tgz 
+      # - name: Download erwin_portal_ldap Helm chart
+      #   run: |
+      #     wget https://github.com/dBildungsplattform/helm-charts-registry/releases/download/${{ needs.find_erwin_portal_ldap_helm_chart_tag.outputs.helm_chart_tagname }}/${{ needs.find_erwin_portal_ldap_helm_chart_tag.outputs.helm_chart_tagname }}.tgz
+      #     tar -zxvf ${{ needs.find_erwin_portal_ldap_helm_chart_tag.outputs.helm_chart_tagname }}.tgz 
       
       # On branches the ticket number is used as image tag. To ensure the pods are restarted
       # and pull the the latest image, we uninstall the helm release first. (Otherwise same tag -> no change)
