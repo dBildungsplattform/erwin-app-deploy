@@ -235,8 +235,8 @@ jobs:
             erwin-portal-keycloak \
             --namespace ${{ inputs.namespace }} \
             --set auth.existingSecret="erwin-portal-keycloak" \
-            --set keycloakHostname=${{ inputs.namespace }}-keycloak.dev.spsh.dbildungsplattform.de \
-            --set frontendHostname=${{ inputs.namespace }}.dev.spsh.dbildungsplattform.de \
+            --set keycloakHostname=${{ inputs.namespace }}-keycloak.dev.erwin.dbildungsplattform.de \
+            --set frontendHostname=${{ inputs.namespace }}.dev.erwin.dbildungsplattform.de \
             --set database.name=${{ needs.recreate_erwin_portal_keycloak_db_name.outputs.db_name }} \
             --set database.username=erwindeveloper \
             --wait \
@@ -260,7 +260,7 @@ jobs:
             erwin-portal-client \
             erwin-portal-client \
             --namespace ${{ inputs.namespace }} \
-            --set frontendHostname=${{ inputs.namespace }}.dev.spsh.dbildungsplattform.de \
+            --set frontendHostname=${{ inputs.namespace }}.dev.erwin.dbildungsplattform.de \
             --wait \
             --timeout 60s
 
@@ -271,7 +271,7 @@ jobs:
             erwin-portal-server \
             --namespace ${{ inputs.namespace }} \
             --set auth.existingSecret="erwin-portal-server" \
-            --set backendHostname=${{ inputs.namespace }}.dev.spsh.dbildungsplattform.de \
+            --set backendHostname=${{ inputs.namespace }}.dev.erwin.dbildungsplattform.de \
             --set database.name=${{ needs.recreate_erwin_portal_server_db_name.outputs.db_name }} \
             --set keycloakHostname=erwin-portal-keycloak \
             ${{ inputs.dbseeding != 'chart_value' && format('--set backend.dbseeding.enabled={0}', inputs.dbseeding) || '' }} \
@@ -305,5 +305,5 @@ jobs:
   #   uses: dBildungsplattform/schulportal-testautomatisierung/.github/workflows/playwright.yml@main
   #   secrets: inherit
   #   with:
-  #     frontendHostname: "${{ inputs.namespace }}.dev.spsh.dbildungsplattform.de"
+  #     frontendHostname: "${{ inputs.namespace }}.dev.erwin.dbildungsplattform.de"
   #     playwright_branch: ${{ needs.determine_playwright_branch.outputs.playwright_branch || 'main' }}
