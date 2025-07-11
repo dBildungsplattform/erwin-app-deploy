@@ -5,7 +5,7 @@ on:
     inputs:
       namespace:
         required: true
-        description: "Namespace has to start with ticketnr, e.g. erw-1234"
+        description: "Namespace has to start with ticketnr, e.g. ERW-1234"
         type: string
     secrets:
       ERWIN_DEV_KUBECONFIG:

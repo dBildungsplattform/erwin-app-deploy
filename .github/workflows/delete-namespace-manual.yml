@@ -5,14 +5,14 @@ on:
      inputs:
       namespace:
         type: string
-        description: Kubernetes namespace to delete, has to start with e.g. erw-1234
+        description: Kubernetes namespace to delete, has to start with e.g. ERW-1234
         required: true
 
 jobs:
   check_namespace_input:
     runs-on: ubuntu-latest
     steps:
-    - name: Check if namespace is allowed, fails if it does not starts with ticketnr, e.g. erw-1234
+    - name: Check if namespace is allowed, fails if it does not starts with ticketnr, e.g. ERW-1234
       run: | 
         regex='^([[:alpha:]]+?-[[:digit:]]+)'
         [[ ${{ github.event.inputs.namespace }} =~ $regex ]]
