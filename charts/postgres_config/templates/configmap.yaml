@@ -9,13 +9,13 @@ data:
     echo "SELECT pg_terminate_backend(pg_stat_activity.pid) FROM pg_stat_activity WHERE pg_stat_activity.datname = '$DB_NAME';" | psql -d postgres -w
     echo "DROP DATABASE IF EXISTS $DB_NAME" | psql -d postgres -w
     echo "Create owner of the DB"
-    echo "SELECT 'CREATE USER erwdeveloper' WHERE NOT EXISTS (SELECT FROM pg_user WHERE usename = 'erwdeveloper')\gexec" | psql -d postgres -w
-    echo "GRANT erwdeveloper TO $PGUSER" | psql -d postgres -w
+    echo "SELECT 'CREATE USER erwindeveloper' WHERE NOT EXISTS (SELECT FROM pg_user WHERE usename = 'erwindeveloper')\gexec" | psql -d postgres -w
+    echo "GRANT erwindeveloper TO $PGUSER" | psql -d postgres -w
     echo "Create database"
-    echo "SELECT 'CREATE DATABASE $DB_NAME OWNER erwdeveloper' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$DB_NAME')\gexec" | psql -d postgres -w
-    echo "Create and set privileges for user erwdeveloper"
-    echo "SELECT 'CREATE USER erwdeveloper' WHERE NOT EXISTS (SELECT FROM pg_user WHERE usename = 'erwdeveloper')\gexec" | psql -d postgres -w
-    echo "ALTER USER erwdeveloper WITH ENCRYPTED PASSWORD '$DB_ERWDEVELOPER_USER_PASS'" | psql -d postgres -w
-    echo "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME to erwdeveloper" | psql -d postgres -w
+    echo "SELECT 'CREATE DATABASE $DB_NAME OWNER erwindeveloper' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '$DB_NAME')\gexec" | psql -d postgres -w
+    echo "Create and set privileges for user erwindeveloper"
+    echo "SELECT 'CREATE USER erwindeveloper' WHERE NOT EXISTS (SELECT FROM pg_user WHERE usename = 'erwindeveloper')\gexec" | psql -d postgres -w
+    echo "ALTER USER erwindeveloper WITH ENCRYPTED PASSWORD '$DB_ERWINDEVELOPER_USER_PASS'" | psql -d postgres -w
+    echo "GRANT ALL PRIVILEGES ON DATABASE $DB_NAME to erwindeveloper" | psql -d postgres -w
     echo "Executing optional custom command"
     echo "$DB_CUSTOM_COMMAND" | psql -d postgres -w

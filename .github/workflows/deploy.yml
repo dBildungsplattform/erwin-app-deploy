@@ -9,26 +9,26 @@ on:
         type: string
       user_name:
         required: false
-        default: erw-bot
+        default: erwin-bot
         type: string
       erwin_portal_server_branch:
         required: true
-        description: "Has to be main or in format <project>-<ticketnumber>, e.g. erw-130"
+        description: "Has to be main or in format <project>-<ticketnumber>, e.g. ERW-130"
         default: main
         type: string
       erwin_portal_client_branch:
         required: true
-        description: "Has to be main or in format <project>-<ticketnumber>, e.g. erw-130"
+        description: "Has to be main or in format <project>-<ticketnumber>, e.g. ERW-130"
         default: main
         type: string
       erwin_portal_keycloak_branch:
         required: true
-        description: "Has to be main or in format <project>-<ticketnumber>, e.g. erw-130"
+        description: "Has to be main or in format <project>-<ticketnumber>, e.g. ERW-130"
         default: main
         type: string
       erwin_portal_ldap_branch:
-        required: true
-        description: "Has to be main or in format <project>-<ticketnumber>, e.g. erw-130"
+        required: false
+        description: "Has to be main or in format <project>-<ticketnumber>, e.g. ERW-130"
         default: main
         type: string      
       dbseeding:
@@ -42,7 +42,7 @@ on:
         default: false
         type: string
     secrets:
-      ERW_DEV_KUBECONFIG:
+      ERWIN_DEV_KUBECONFIG:
         required: true
     
 permissions:
@@ -70,12 +70,15 @@ jobs:
       branch: ${{ inputs.erwin_portal_keycloak_branch }}
       chart_name: "erwin-portal-keycloak"
 
-  find_erwin_portal_ldap_helm_chart_tag:
-    uses: dBildungsplattform/erwin-app-deploy/.github/workflows/find-helm-chart-by-ticket-or-main-in-registry.yml@1
-    with:
-      github_repository: "dBildungsplattform/helm-charts-registry"
-      branch: ${{ inputs.erwin_portal_ldap_branch }}
-      chart_name: "erwin-portal-ldap"
+  # For now, we exclude LDAP from this deployment (focusing on server, client, and Keycloak deployment),
+  # but we need to resolve the LDAP issue and include it in the deployment as soon as possible.
+  
+  # find_erwin_portal_ldap_helm_chart_tag:
+  #   uses: dBildungsplattform/erwin-app-deploy/.github/workflows/find-helm-chart-by-ticket-or-main-in-registry.yml@1
+  #   with:
+  #     github_repository: "dBildungsplattform/helm-charts-registry"
+  #     branch: ${{ inputs.erwin_portal_ldap_branch }}
+  #     chart_name: "erwin-portal-ldap"
   
   recreate_erwin_portal_keycloak_db_name:
     runs-on: ubuntu-latest
@@ -110,13 +113,13 @@ jobs:
       - find_erwin_portal_server_helm_chart_tag
       - find_erwin_portal_client_helm_chart_tag
       - find_erwin_portal_keycloak_helm_chart_tag
-      - find_erwin_portal_ldap_helm_chart_tag
+      #- find_erwin_portal_ldap_helm_chart_tag
       - recreate_erwin_portal_keycloak_db_name
       - recreate_erwin_portal_server_db_name
     runs-on: 'ubuntu-latest'
     env:
       GITHUB_TOKEN: ${{ github.token }}
-      KUBECONFIG_FILE: '${{ secrets.ERW_DEV_KUBECONFIG }}'
+      KUBECONFIG_FILE: '${{ secrets.ERWIN_DEV_KUBECONFIG }}'
     steps:
       - name: Check if namespace is allowed, fails if it not starts with ticketnr, e.g. erw-1234 or is exactly 'main'
         run: | 
@@ -132,14 +135,14 @@ jobs:
           repository: 'dBildungsplattform/erwin-app-deploy'
           # comment this in to test changes of a branch in repo
           # ref: "<branch_name>"
-          
+
       - name: Set up kubectl and Helm
         uses: azure/setup-kubectl@3e0aec4d80787158d308d7b364cb1b702e7feb7f #v4.0.0
 
       - name: Set kubeconfig
         run: |
           mkdir /home/runner/.kube/
-          echo "${{ secrets.ERW_DEV_KUBECONFIG }}" > /home/runner/.kube/config
+          echo "${{ secrets.ERWIN_DEV_KUBECONFIG }}" > /home/runner/.kube/config
           chmod 600 /home/runner/.kube/config
 
       - name: Create Kubernetes namespace
@@ -161,10 +164,10 @@ jobs:
           wget https://github.com/dBildungsplattform/helm-charts-registry/releases/download/${{ needs.find_erwin_portal_keycloak_helm_chart_tag.outputs.helm_chart_tagname }}/${{ needs.find_erwin_portal_keycloak_helm_chart_tag.outputs.helm_chart_tagname }}.tgz
           tar -zxvf ${{ needs.find_erwin_portal_keycloak_helm_chart_tag.outputs.helm_chart_tagname }}.tgz 
 
-      - name: Download erwin_portal_ldap Helm chart
-        run: |
-          wget https://github.com/dBildungsplattform/helm-charts-registry/releases/download/${{ needs.find_erwin_portal_ldap_helm_chart_tag.outputs.helm_chart_tagname }}/${{ needs.find_erwin_portal_ldap_helm_chart_tag.outputs.helm_chart_tagname }}.tgz
-          tar -zxvf ${{ needs.find_erwin_portal_ldap_helm_chart_tag.outputs.helm_chart_tagname }}.tgz 
+      # - name: Download erwin_portal_ldap Helm chart
+      #   run: |
+      #     wget https://github.com/dBildungsplattform/helm-charts-registry/releases/download/${{ needs.find_erwin_portal_ldap_helm_chart_tag.outputs.helm_chart_tagname }}/${{ needs.find_erwin_portal_ldap_helm_chart_tag.outputs.helm_chart_tagname }}.tgz
+      #     tar -zxvf ${{ needs.find_erwin_portal_ldap_helm_chart_tag.outputs.helm_chart_tagname }}.tgz 
       
       # On branches the ticket number is used as image tag. To ensure the pods are restarted
       # and pull the the latest image, we uninstall the helm release first. (Otherwise same tag -> no change)
@@ -190,9 +193,9 @@ jobs:
         run: |
           kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-server-secret-dev.yaml 
           kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-keycloak-secret-dev.yaml
-          kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-ldap-secret-dev.yaml
-          kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-ldap-config-modify.yaml
-          kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-ldap-config-apply.yaml
+          # kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-ldap-secret-dev.yaml
+          # kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-ldap-config-modify.yaml
+          # kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-ldap-config-apply.yaml
 
       - name: "Recreate Database for erwin-portal-keycloak - Recreate: ${{ inputs.database_recreation }}"
         run: |
@@ -211,15 +214,15 @@ jobs:
             --set database.name=${{ needs.recreate_erwin_portal_keycloak_db_name.outputs.db_name }} \
             --set database.recreation=${{ inputs.database_recreation }}
 
-      - name: "Recreate Database for erwin_portal-server - Recreate: ${{ inputs.database_recreation }}"
+      - name: "Recreate Database for erwin-portal-server - Recreate: ${{ inputs.database_recreation }}"
         run: |
           # Generate timestamp for job name uniqueness
           DATE=$(date +%Y%m%d%H%M%S)
 
-          # Define job name for ERW-App database creation job
+          # Define job name for ERWIN-App database creation job
           HELM_SERVER_DB_JOB_NAME="psql-db-${DATE}-database-${{ inputs.namespace }}"
 
-          # Recreate Database for ERW-App 
+          # Recreate Database for ERWIN-App 
           helm upgrade --install \
             $HELM_SERVER_DB_JOB_NAME \
             ./charts/postgres_recreate_databases \
@@ -236,14 +239,14 @@ jobs:
             erwin-portal-keycloak \
             --namespace ${{ inputs.namespace }} \
             --set auth.existingSecret="erwin-portal-keycloak" \
-            --set keycloakHostname=${{ inputs.namespace }}-keycloak.dev.spsh.dbildungsplattform.de \
-            --set frontendHostname=${{ inputs.namespace }}.dev.spsh.dbildungsplattform.de \
+            --set keycloakHostname=${{ inputs.namespace }}-keycloak.dev.erwin.dbildungscloud.de \
+            --set frontendHostname=${{ inputs.namespace }}.dev.erwin.dbildungscloud.de \
             --set database.name=${{ needs.recreate_erwin_portal_keycloak_db_name.outputs.db_name }} \
-            --set database.username=erwdeveloper \
+            --set database.username=erwindeveloper \
             --wait \
-            --timeout 210s
-      # Deploy erwin_portal_ldap wird in folloup ticket bearbeitet
-      # even though the initTLSSecret.secret value is set it has no effect if the initTLSSecret in not enabled (default: false) - only necessary for External IP
+            --timeout 300s
+      
+      # # even though the initTLSSecret.secret value is set it has no effect if the initTLSSecret in not enabled (default: false) - only necessary for External IP
       # - name: Deploy erwin_portal_ldap Helm chart
       #   run: |
       #     helm upgrade --install \
@@ -261,7 +264,7 @@ jobs:
             erwin-portal-client \
             erwin-portal-client \
             --namespace ${{ inputs.namespace }} \
-            --set frontendHostname=${{ inputs.namespace }}.dev.spsh.dbildungsplattform.de \
+            --set frontendHostname=${{ inputs.namespace }}.dev.erwin.dbildungscloud.de \
             --wait \
             --timeout 60s
 
@@ -272,7 +275,7 @@ jobs:
             erwin-portal-server \
             --namespace ${{ inputs.namespace }} \
             --set auth.existingSecret="erwin-portal-server" \
-            --set backendHostname=${{ inputs.namespace }}.dev.spsh.dbildungsplattform.de \
+            --set backendHostname=${{ inputs.namespace }}.dev.erwin.dbildungscloud.de \
             --set database.name=${{ needs.recreate_erwin_portal_server_db_name.outputs.db_name }} \
             --set keycloakHostname=erwin-portal-keycloak \
             ${{ inputs.dbseeding != 'chart_value' && format('--set backend.dbseeding.enabled={0}', inputs.dbseeding) || '' }} \

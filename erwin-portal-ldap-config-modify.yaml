@@ -3,4 +3,4 @@ kind: OnePasswordItem
 metadata:
   name: erwin-portal-ldap-config-modify
 spec:
-  itemPath: "vaults/infra-dev/items/erwin-portal-ldap-config-modify"
+  itemPath: "vaults/erwin-dev-portal/items/erwin-portal-ldap-config-modify"

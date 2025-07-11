@@ -5,10 +5,10 @@ on:
     inputs:
       namespace:
         required: true
-        description: "Namespace has to start with ticketnr, e.g. erw-1234"
+        description: "Namespace has to start with ticketnr, e.g. ERW-1234"
         type: string
     secrets:
-      ERW_DEV_KUBECONFIG:
+      ERWIN_DEV_KUBECONFIG:
         required: true
 permissions:
   contents: read
@@ -72,7 +72,7 @@ jobs:
 
     - name: Configure kubeconfig as tmp file
       run: |
-        echo "${{ secrets.ERW_DEV_KUBECONFIG }}" > kubeconfig
+        echo "${{ secrets.ERWIN_DEV_KUBECONFIG }}" > kubeconfig
         export KUBECONFIG=$(pwd)/kubeconfig
 
     - name: Delete all Helm-Charts in Namespace to eliminate all database connections
