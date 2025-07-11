@@ -135,8 +135,6 @@ jobs:
           repository: 'dBildungsplattform/erwin-app-deploy'
           # comment this in to test changes of a branch in repo
           # ref: "<branch_name>"
-          ref: "DBP-1529-deploy-erwin-pipeline"
-
 
       - name: Set up kubectl and Helm
         uses: azure/setup-kubectl@3e0aec4d80787158d308d7b364cb1b702e7feb7f #v4.0.0
@@ -283,33 +281,3 @@ jobs:
             ${{ inputs.dbseeding != 'chart_value' && format('--set backend.dbseeding.enabled={0}', inputs.dbseeding) || '' }} \
             --wait \
             --timeout 360s
-  
-  determine_playwright_branch:
-    if: ${{ github.event_name == 'push' && !startsWith(github.ref_name,'dependabot/')}}
-    runs-on: ubuntu-latest
-    outputs:
-      playwright_branch: ${{ steps.check_branch.outputs.playwright_branch }}
-    steps:
-      - name: Check current branch
-        run: |
-          echo "Current branch: ${{ github.ref_name }}"
-      - name: Check if Playwright branch exists
-        id: check_branch
-        run: |
-          playwright_branch="${{ github.ref_name }}"
-          if git ls-remote --heads --exit-code https://github.com/dBildungsplattform/schulportal-testautomatisierung $playwright_branch &> /dev/null; then
-            echo "playwright_branch=$playwright_branch" >> $GITHUB_OUTPUT
-          else
-            echo "playwright_branch=main" >> $GITHUB_OUTPUT
-          fi
-          echo "Branch exists: $?"
-
-  run_playwright_tests:
-    needs:
-      - deployment
-      - determine_playwright_branch
-    uses: dBildungsplattform/schulportal-testautomatisierung/.github/workflows/playwright.yml@main
-    secrets: inherit
-    with:
-      frontendHostname: "${{ inputs.namespace }}.dev.erwin.dbildungscloud.de"
-      playwright_branch: ${{ needs.determine_playwright_branch.outputs.playwright_branch || 'main' }}
