@@ -70,9 +70,6 @@ jobs:
       branch: ${{ inputs.erwin_portal_keycloak_branch }}
       chart_name: "erwin-portal-keycloak"
 
-  # For now, we exclude LDAP from this deployment (focusing on server, client, and Keycloak deployment),
-  # but we need to resolve the LDAP issue and include it in the deployment as soon as possible.
-  
   find_erwin_portal_ldap_helm_chart_tag:
     uses: dBildungsplattform/erwin-app-deploy/.github/workflows/find-helm-chart-by-ticket-or-main-in-registry.yml@1
     with:
@@ -255,8 +252,9 @@ jobs:
             --namespace ${{ inputs.namespace }} \
             --set global.existingSecret="erwin-portal-ldap" \
             --set initTLSSecret.secret="erwin-portal-ldap-tls" \
-            --wait \
-            --timeout 90s
+        # do not require it as long as ldap is in development state
+            # --wait \
+        # --timeout 90s
       
       - name: Deploy erwin_portal_client Helm chart
         run: |
