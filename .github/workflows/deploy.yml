@@ -131,7 +131,7 @@ jobs:
         with:
           repository: 'dBildungsplattform/erwin-app-deploy'
           # comment this in to test changes of a branch in repo
-          ref: DBP-1586-DeployLdap
+          # ref: "<branch_name>"
 
       - name: Set up kubectl and Helm
         uses: azure/setup-kubectl@3e0aec4d80787158d308d7b364cb1b702e7feb7f #v4.0.0
@@ -252,9 +252,8 @@ jobs:
             --namespace ${{ inputs.namespace }} \
             --set global.existingSecret="erwin-portal-ldap" \
             --set initTLSSecret.secret="erwin-portal-ldap-tls" \
-        # do not require it as long as ldap is in development state
-            # --wait \
-        # --timeout 90s
+            --wait \
+            --timeout 90s
       
       - name: Deploy erwin_portal_client Helm chart
         run: |
