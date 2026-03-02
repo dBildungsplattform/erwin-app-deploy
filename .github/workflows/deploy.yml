@@ -26,7 +26,7 @@ on:
         description: "Has to be main or in format <project>-<ticketnumber>, e.g. ERW-130"
         default: main
         type: string
-      erwin_portal_ldap_branch:
+      erwin_portal_internal_ldap_branch:
         required: false
         description: "Has to be main or in format <project>-<ticketnumber>, e.g. ERW-130"
         default: main
@@ -70,11 +70,11 @@ jobs:
       branch: ${{ inputs.erwin_portal_keycloak_branch }}
       chart_name: "erwin-portal-keycloak"
 
-  find_erwin_portal_ldap_helm_chart_tag:
+  find_erwin_portal_internal_ldap_helm_chart_tag:
     uses: dBildungsplattform/erwin-app-deploy/.github/workflows/find-helm-chart-by-ticket-or-main-in-registry.yml@1
     with:
       github_repository: "dBildungsplattform/helm-charts-registry"
-      branch: ${{ inputs.erwin_portal_ldap_branch }}
+      branch: ${{ inputs.erwin_portal_internal_ldap_branch }}
       chart_name: "erwin-portal-ldap"
   
   recreate_erwin_portal_keycloak_db_name:
@@ -110,7 +110,7 @@ jobs:
       - find_erwin_portal_server_helm_chart_tag
       - find_erwin_portal_client_helm_chart_tag
       - find_erwin_portal_keycloak_helm_chart_tag
-      - find_erwin_portal_ldap_helm_chart_tag
+      - find_erwin_portal_internal_ldap_helm_chart_tag
       - recreate_erwin_portal_keycloak_db_name
       - recreate_erwin_portal_server_db_name
     runs-on: 'ubuntu-latest'
@@ -189,10 +189,10 @@ jobs:
           wget https://github.com/dBildungsplattform/helm-charts-registry/releases/download/${{ needs.find_erwin_portal_keycloak_helm_chart_tag.outputs.helm_chart_tagname }}/${{ needs.find_erwin_portal_keycloak_helm_chart_tag.outputs.helm_chart_tagname }}.tgz
           tar -zxvf ${{ needs.find_erwin_portal_keycloak_helm_chart_tag.outputs.helm_chart_tagname }}.tgz 
 
-      - name: Download erwin_portal_ldap Helm chart
+      - name: Download erwin_portal_internal_ldap Helm chart
         run: |
-          wget https://github.com/dBildungsplattform/helm-charts-registry/releases/download/${{ needs.find_erwin_portal_ldap_helm_chart_tag.outputs.helm_chart_tagname }}/${{ needs.find_erwin_portal_ldap_helm_chart_tag.outputs.helm_chart_tagname }}.tgz
-          tar -zxvf ${{ needs.find_erwin_portal_ldap_helm_chart_tag.outputs.helm_chart_tagname }}.tgz 
+          wget https://github.com/dBildungsplattform/helm-charts-registry/releases/download/${{ needs.find_erwin_portal_internal_ldap_helm_chart_tag.outputs.helm_chart_tagname }}/${{ needs.find_erwin_portal_internal_ldap_helm_chart_tag.outputs.helm_chart_tagname }}.tgz
+          tar -zxvf ${{ needs.find_erwin_portal_internal_ldap_helm_chart_tag.outputs.helm_chart_tagname }}.tgz 
       
       # On branches the ticket number is used as image tag. To ensure the pods are restarted
       # and pull the the latest image, we uninstall the helm release first. (Otherwise same tag -> no change)
@@ -272,7 +272,7 @@ jobs:
             --timeout 300s
       
       # even though the initTLSSecret.secret value is set it has no effect if the initTLSSecret in not enabled (default: false) - only necessary for External IP
-      - name: Deploy erwin_portal_ldap Helm chart
+      - name: Deploy erwin_portal_internal_ldap Helm chart
         run: |
           helm upgrade --install \
             erwin-portal-internal-ldap \
