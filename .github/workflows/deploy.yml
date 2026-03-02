@@ -278,8 +278,7 @@ jobs:
             erwin-portal-internal-ldap \
             erwin-portal-ldap \
             --namespace ${{ inputs.namespace }} \
-            --set global.existingSecret="erwin-portal-ldap" \
-            --set global.existingSecret="erwin-portal-internal-ldap" \
+            --set existingSecret="erwin-portal-internal-ldap" \
             --wait \
             --timeout 90s
       
