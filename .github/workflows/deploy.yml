@@ -131,7 +131,7 @@ jobs:
         with:
           repository: 'dBildungsplattform/erwin-app-deploy'
           # comment this in to test changes of a branch in repo
-          # ref: "<branch_name>"
+          ref: "DBP-2091-deploy-internal-ldap"
 
       - name: Set up kubectl and Helm
         uses: azure/setup-kubectl@3e0aec4d80787158d308d7b364cb1b702e7feb7f #v4.0.0
@@ -219,8 +219,9 @@ jobs:
           kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-server-secret-dev.yaml 
           kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-keycloak-secret-dev.yaml
           kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-ldap-secret-dev.yaml
-          kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-ldap-config-modify.yaml
-          kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-ldap-config-apply.yaml
+          kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-internal-ldap-secret-dev.yaml
+          kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-internal-ldap-config-modify.yaml
+          kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-internal-ldap-config-apply.yaml
 
       - name: "Recreate Database for erwin-portal-keycloak - Recreate: ${{ inputs.database_recreation }}"
         run: |
@@ -275,11 +276,11 @@ jobs:
       - name: Deploy erwin_portal_ldap Helm chart
         run: |
           helm upgrade --install \
-            erwin-portal-ldap \
+            erwin-portal-internal-ldap \
             erwin-portal-ldap \
             --namespace ${{ inputs.namespace }} \
             --set global.existingSecret="erwin-portal-ldap" \
-            --set initTLSSecret.secret="erwin-portal-ldap-tls" \
+            --set global.existingSecret="erwin-portal-internal-ldap" \
             --wait \
             --timeout 90s
       

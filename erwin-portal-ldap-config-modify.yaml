@@ -1,6 +1,0 @@
-apiVersion: onepassword.com/v1
-kind: OnePasswordItem
-metadata:
-  name: erwin-portal-ldap-config-modify
-spec:
-  itemPath: "vaults/erwin-dev-portal/items/erwin-portal-ldap-config-modify"
