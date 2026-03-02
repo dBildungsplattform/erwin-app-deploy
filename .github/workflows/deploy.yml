@@ -218,7 +218,6 @@ jobs:
         run: |
           kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-server-secret-dev.yaml 
           kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-keycloak-secret-dev.yaml
-          kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-ldap-secret-dev.yaml
           kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-internal-ldap-secret-dev.yaml
           kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-internal-ldap-config-modify.yaml
           kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-internal-ldap-config-apply.yaml
