@@ -1,6 +1,6 @@
 apiVersion: onepassword.com/v1
 kind: OnePasswordItem
 metadata:
-  name: erwin-portal-ldap
+  name: erwin-ldap-seed-data
 spec:
   itemPath: "vaults/erwin-dev-portal/items/erwin-ldap-seed-data"
