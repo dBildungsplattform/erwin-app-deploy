@@ -221,7 +221,7 @@ jobs:
           kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-ldap-secret-dev.yaml
           kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-ldap-config-modify.yaml
           kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-ldap-config-apply.yaml
-          kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-ldap-seed-data-dev.yaml
+          kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-ldap-seed-data.yaml
 
       - name: "Recreate Database for erwin-portal-keycloak - Recreate: ${{ inputs.database_recreation }}"
         run: |
