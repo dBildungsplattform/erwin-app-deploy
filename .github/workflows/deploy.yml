@@ -221,6 +221,7 @@ jobs:
           kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-ldap-secret-dev.yaml
           kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-ldap-config-modify.yaml
           kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-ldap-config-apply.yaml
+          kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-ldap-seed-data.yaml
 
       - name: "Recreate Database for erwin-portal-keycloak - Recreate: ${{ inputs.database_recreation }}"
         run: |
@@ -281,7 +282,7 @@ jobs:
             --set global.existingSecret="erwin-portal-ldap" \
             --set initTLSSecret.secret="erwin-portal-ldap-tls" \
             --wait \
-            --timeout 90s
+            --timeout 300s
       
       - name: Deploy erwin_portal_client Helm chart
         run: |
