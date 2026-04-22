@@ -282,7 +282,7 @@ jobs:
             --set global.existingSecret="erwin-portal-ldap" \
             --set initTLSSecret.secret="erwin-portal-ldap-tls" \
             --wait \
-            --timeout 90s
+            --timeout 300s
       
       - name: Deploy erwin_portal_client Helm chart
         run: |
