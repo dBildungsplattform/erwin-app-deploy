@@ -216,6 +216,7 @@ jobs:
           fi
       - name: Create all secrets
         run: |
+          kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-credentials-secret-dev.yaml
           kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-server-secret-dev.yaml 
           kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-keycloak-secret-dev.yaml
           kubectl --namespace=${{ inputs.namespace }} apply -f ./erwin-portal-ldap-secret-dev.yaml
